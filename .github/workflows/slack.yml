@@ -23,13 +23,13 @@ jobs:
         echo "Report from JavaScript script:"
         echo "$report"
 
-    - name: Debug Slack Webhook URL
-      run: |
-        echo "Slack Webhook URL: ${{ secrets.SLACK_WEBHOOK_URL }}/ios-demos"
-
     - name: Post to Slack
       if: ${{ success() }}
       run: |
-        curl -X POST -H 'Content-type: application/json' \
-          --data '{"text": "'"${{ steps.run.outputs.report }}"'"}' \
-          ${{ secrets.SLACK_WEBHOOK_URL }}/ios-demos
+        changes=${{ steps.run.outputs.report }}
+        curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "Changes in Swift files:\n'"$changes"'",
+            "channel": "#ios-demos",
+            "username": "GitHub Actions"
+          }' ${{ secrets.SLACK_WEBHOOK_URL }}
+          
