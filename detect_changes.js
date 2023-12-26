@@ -1,25 +1,54 @@
-import subprocess
+const { execSync } = require('child_process');
 
-# Get the list of changed files in the last commit
-changed_files = (
-    subprocess.check_output('git diff --name-only HEAD~1 --', shell=True)
-    .decode('utf-8')
-    .split('\n')
-    # Remove empty strings from the list
-    [file for file in files if file]
-)
+// Get the list of changed files in the last commit
+const changedFiles = execSync('git diff --name-only HEAD~1 --')
+  .toString()
+  .split('\n')
+  .filter(Boolean);
 
-# Debugging output
-print('Changed Files:', changed_files)
+// Debugging output
+console.log('Changed Files:');
 
-# Filter out only the .swift files
-swift_files = [file for file in changed_files if file.endswith('.swift')]
+// Separate files into added, edited, and removed
+const addedFiles = [];
+const editedFiles = [];
+const removedFiles = [];
 
-# Debugging output
-print('Swift Files:', swift_files)
+changedFiles.forEach(file => {
+  if (file.endsWith('.swift')) {
+    const changeType = execSync(`git diff --name-status HEAD~1 -- ${file}`)
+      .toString()
+      .charAt(0);
 
-# Create a report of changed .swift files
-report = f'Changed Swift Files:\n{"\n".join(swift_files)}'
+    switch (changeType) {
+      case 'A':
+        addedFiles.push(file);
+        break;
+      case 'M':
+        editedFiles.push(file);
+        break;
+      case 'D':
+        removedFiles.push(file);
+        break;
+    }
+  }
+});
 
-# Print the report to standard output
-print(report)
+// Function to format files with emojis
+const formatFiles = (emoji, files) =>
+  files.map(file => `${emoji} ${file}`).join('\n');
+
+// Print the edited section
+if (editedFiles.length > 0) {
+  console.log('\nEdited:\n' + formatFiles(':raised_back_of_hand:', editedFiles));
+}
+
+// Print the added section
+if (addedFiles.length > 0) {
+  console.log('\nAdded:\n' + formatFiles(':new:', addedFiles));
+}
+
+// Print the removed section
+if (removedFiles.length > 0) {
+  console.log('\nRemoved:\n' + formatFiles(':fire:', removedFiles));
+}
