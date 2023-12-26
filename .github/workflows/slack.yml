@@ -22,6 +22,7 @@ jobs:
         echo "::set-output name=report::$report"
 
     - name: Post to Slack
+      if: ${{ success() }}
       run: |
         curl -X POST -H 'Content-type: application/json' \
           --data '{"text": "'"${{ steps.run.outputs.report }}"'"}' \
