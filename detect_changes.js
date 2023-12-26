@@ -35,20 +35,20 @@ changedFiles.forEach(file => {
 });
 
 // Function to format files with emojis
-const formatFiles = (emoji, files) =>
+const formatFiles = (files) =>
   files.map(file => `${emoji} ${file}`).join('\n');
 
 // Print the edited section
 if (editedFiles.length > 0) {
-  console.log('\nEdited:\n' + formatFiles(':raised_back_of_hand:', editedFiles));
+  console.log('\nEdited:\n' + formatFiles(editedFiles));
 }
 
 // Print the added section
 if (addedFiles.length > 0) {
-  console.log('\nAdded:\n' + formatFiles(':new:', addedFiles));
+  console.log('\nAdded:\n' + formatFiles(addedFiles));
 }
 
 // Print the removed section
 if (removedFiles.length > 0) {
-  console.log('\nRemoved:\n' + formatFiles(':fire:', removedFiles));
+  console.log('\nRemoved:\n' + formatFiles(removedFiles));
 }
