@@ -5,7 +5,8 @@ changed_files = (
     subprocess.check_output('git diff --name-only HEAD~1 --', shell=True)
     .decode('utf-8')
     .split('\n')
-    .remove('')  # Remove empty strings from the list
+    # Remove empty strings from the list
+    [file for file in files if file]
 )
 
 # Debugging output
