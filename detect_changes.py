@@ -1,8 +1,8 @@
 import subprocess
-import os
 
 # Get the list of changed files in the last commit
-changed_files = subprocess.check_output('git diff --name-only HEAD^ HEAD', shell=True).decode('utf-8').split('\n')
+result = subprocess.run('git diff --name-only HEAD^ HEAD', shell=True, stdout=subprocess.PIPE, text=True)
+changed_files = result.stdout.split('\n')
 
 # Filter out only the .swift files
 swift_files = [file for file in changed_files if file.endswith('.swift')]
