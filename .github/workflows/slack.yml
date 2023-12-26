@@ -1,4 +1,4 @@
-name: Detect Changes and Notify Slack
+name: Notify Slack on Main Push
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  detect-changes-and-notify:
+  notify-slack:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,19 +23,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install gitpython
 
-      - name: Run Python script and capture changes
-        id: detect_changes
-        run: |
-          changed_files=$(python detect_changes.py)
-          echo "Changed Files: $changed_files"
-          echo "::set-output name=changed_files::$changed_files"
+      - name: Run Python script
+        id: run_script
+        run: python path/to/notify_slack.py
 
       - name: Send message to Slack
-        if: steps.detect_changes.outputs.changed_files != ''
+        if: success()
         run: |
-          SLACK_MESSAGE="Changes detected in files:\n$(echo "${{ steps.detect_changes.outputs.changed_files }}")"
+          slack_message="${{ steps.run_script.outputs.stdout }}"
+          slack_webhook_url="${{ secrets.SLACK_WEBHOOK_URL }}"
+
           curl -X POST -H 'Content-type: application/json' --data '{
-            "text": "'"$SLACK_MESSAGE"'",
-            "channel": "#ios-demos",
+            "text": "'"$slack_message"'",
+            "channel": "#ios-demo",
             "username": "GitHub Actions"
-          }' ${{ secrets.SLACK_WEBHOOK_URL }}
+          }' "$slack_webhook_url"

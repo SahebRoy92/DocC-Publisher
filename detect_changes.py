@@ -1,25 +1,28 @@
 import os
 from git import Repo
 
-# Open the repository
-repo = Repo(os.getcwd())  # Using os.getcwd() to get the current working directory
+def get_changed_files():
+    repo = Repo(os.getcwd())
+    repo.remotes.origin.fetch()
 
-# Fetch changes from the remote repository
-repo.remotes.origin.fetch()
+    main_branch = repo.branches['main']
+    head_commit = main_branch.commit
+    remote_commit = repo.remotes.origin.refs['main'].commit
 
-# Get the main branch
-main_branch = repo.branches['main']  # Using the branch name directly
+    changed_files = repo.git.diff(f"{remote_commit}..{head_commit}", name_only=True).splitlines()
+    return changed_files
 
-# Get the commit at the tip of the main branch
-head_commit = main_branch.commit
+def create_slack_message(changed_files):
+    if not changed_files:
+        return "No new changes detected."
 
-# Get the commit at the tip of the main branch on the remote repository
-remote_commit = repo.remotes.origin.refs['main'].commit  # Using the branch name directly
+    message = "New changes detected in main branch:\n"
+    for file in changed_files:
+        message += f"- {file}\n"
 
-# Get the changes between the local and remote main branches
-changed_files = repo.git.diff(remote_commit, head_commit, name_only=True).splitlines()
+    return message
 
-# Print the changed files
-print("Changed Files:")
-for file in changed_files:
-    print(file)
+if __name__ == "__main__":
+    changed_files = get_changed_files()
+    slack_message = create_slack_message(changed_files)
+    print(slack_message)
