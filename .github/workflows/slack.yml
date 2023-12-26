@@ -21,7 +21,7 @@ jobs:
     - name: Run JavaScript Script
       id: run
       run: |
-        report=$(node your_script.js)
+        report=$(node detect_changes.js)
         echo "::set-output name=report::$report"
 
     - name: Post to Slack
