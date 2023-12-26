@@ -28,31 +28,15 @@ jobs:
           export FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '.swift' || true)
           echo "$FILES"
 
-      - name: Extract class names
-        id: extract_class_names
-        run: |
-          IFS=$'\n'
-          files=($FILES)
-          class_names=()
-
-          for file in "${files[@]}"; do
-            class_name=$(basename $file .swift)
-            class_names+=("$class_name")
-          done
-
-          echo "Class Names: ${class_names[@]}"
-          echo "::set-output name=class_names::${class_names[@]}"
-
       - name: Get changes for each file
         id: get_changes
         run: |
-          class_names=${{ steps.extract_class_names.outputs.class_names }}
           changes=""
-
-          for class_name in $class_names; do
+          while IFS= read -r file; do
+            class_name=$(basename "$file" .swift)
             changes+="\nChanges in $class_name:\n"
-            changes+=$(git diff --unified=0 ${{ github.event.before }} ${{ github.sha }} $FILES | grep -A 2 "class $class_name" || true)
-          done
+            changes+=$(git diff --unified=0 ${{ github.event.before }} ${{ github.sha }} "$file" | grep -A 2 "class $class_name" || true)
+          done <<< "$FILES"
 
           echo "Changes:"
           echo "$changes"
@@ -61,14 +45,10 @@ jobs:
       - name: Send message to Slack
         if: success()
         run: |
-          class_names=${{ steps.extract_class_names.outputs.class_names }}
           changes=${{ steps.get_changes.outputs.changes }}
 
-          for class_name in $class_names; do
-            class_changes=$(echo "$changes" | sed -n "/Changes in $class_name:/,/Changes in/ p")
-            curl -X POST -H 'Content-type: application/json' --data '{
-              "text": "Code modified at: '${class_name}'\nChanges -\n'"$class_changes"'",
-              "channel": "#ios-demos",
-              "username": "GitHub Actions"
-            }' ${{ secrets.SLACK_WEBHOOK_URL }}
-          done
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "Changes in Swift files:\n'"$changes"'",
+            "channel": "#ios-demos",
+            "username": "GitHub Actions"
+          }' ${{ secrets.SLACK_WEBHOOK_URL }}
