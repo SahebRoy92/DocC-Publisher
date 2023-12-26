@@ -9,53 +9,53 @@ on:
 jobs:
   check-xcode-changes:
     runs-on: macos-latest
-
+    env:
+      FILES: ""
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest
+      - name: Get changed files
+        id: changed_files
+        run: >
+          echo "Changed Files:"
 
-    - name: Set up Xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: latest
+          export FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '.swift' || true)
 
-    - name: Get changed files
-      id: changed_files
-      run: |
-        echo "Changed Files:"
-        echo "::set-output name=files::$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '.swift' || true)"
+          echo "$FILES"
+      - name: Extract module name and class names
+        id: extract_info
+        run: |
+          IFS=$'\n'
+          files=($FILES)
+          for file in "${files[@]}"; do
+            module_name=$(echo $file | awk -F'/' '{print $2}')
+            class_name=$(basename $file .swift)
+            echo "Module Name: $module_name"
+            echo "Class Name: $class_name"
+            echo "MODULE_NAME=$module_name" >> $GITHUB_ENV
+            echo "CLASS_NAME=$class_name" >> $GITHUB_ENV
+          done
+      - name: Get changes for each file
+        id: get_changes
+        run: >
+          module_name=$MODULE_NAME
 
-    - name: Extract module name and class names
-      id: extract_info
-      run: |
-        IFS=$'\n'
-        files=(${{ steps.changed_files.outputs.files }})
-        for file in "${files[@]}"; do
-          module_name=$(echo $file | awk -F'/' '{print $2}')
-          class_name=$(basename $file .swift)
-          echo "Module Name: $module_name"
-          echo "Class Name: $class_name"
-          echo "::set-output name=module_name::$module_name"
-          echo "::set-output name=class_name::$class_name"
-        done
+          class_name=$CLASS_NAME
 
-    - name: Get changes for each file
-      id: get_changes
-      run: |
-        module_name=${{ steps.extract_info.outputs.module_name }}
-        class_name=${{ steps.extract_info.outputs.class_name }}
-        changes=$(git diff --unified=0 ${{ github.event.before }} ${{ github.sha }} ${{ steps.changed_files.outputs.files }} | grep -A 2 "class $class_name" || true)
-        echo "Changes:"
-        echo "$changes"
+          changes=$(git diff --unified=0 ${{ github.event.before }} ${{ github.sha }} $FILES | grep -A 2 "class $class_name" || true)
 
-    - name: Send message to Slack
-      if: success()
-      uses: rtCamp/action-slack-notify@v2
-      with:
-        slack_webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-        channel: '#ios-demos'  # Replace 'your-channel-name' with the actual Slack channel name
-        text: |
-          "Changes to Module ${{ steps.extract_info.outputs.module_name }}"
-          "Class Name: ${{ steps.extract_info.outputs.class_name }}.swift"
-          "Changes -"
-          "${{ steps.get_changes.outputs.changes }}"
+          echo "Changes:"
+
+          echo "$changes"
+      - name: Send message to Slack
+        if: success()
+        run: >
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "Changes to Module '${MODULE_NAME}'\nClass Name: '${CLASS_NAME}.swift'\nChanges -\n${changes}",
+            "channel": "#ios-demos",
+            "username": "GitHub Actions"
+          }' ${{ secrets.SLACK_WEBHOOK_URL }}
