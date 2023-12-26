@@ -1,4 +1,4 @@
-name: Swift File Changes Report
+name: Run JS and Post to Slack
 
 on:
   push:
@@ -6,30 +6,30 @@ on:
       - main
 
 jobs:
-  swift-file-changes:
+  run-js-and-post-to-slack:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2
       with:
-        fetch-depth: '2'
+        fetch-depth: 2
+
+    - name: Install Node.js
+      run: sudo apt-get update && sudo apt-get install -y nodejs npm
 
     - name: Run JavaScript Script
       id: run
       run: |
-        report=$(node detect_changes.js)
+        report=$(node your_script.js)
         echo "::set-output name=report::$report"
-        echo "Report from JavaScript script:"
-        echo "$report"
 
     - name: Post to Slack
       if: ${{ success() }}
       run: |
-        changes=${{ steps.run.outputs.report }}
+        changes="${{ steps.run.outputs.report }}"
         curl -X POST -H 'Content-type: application/json' --data '{
-            "text": "Changes in Swift files:\n'"$changes"'",
-            "channel": "#ios-demos",
-            "username": "GitHub Actions"
-          }' ${{ secrets.SLACK_WEBHOOK_URL }}
-          
+          "text": "Changes in Swift files:\n'"$changes"'",
+          "channel": "#ios-demos",
+          "username": "GitHub Actions"
+        }' ${{ secrets.SLACK_WEBHOOK_URL }}
