@@ -3,6 +3,9 @@ name: docc
 on:
   push:
     branches: [main]
+    paths:
+        - "DocCPublisherDemo/DocCPublisherDemo/**.swift"
+        - .github/workflows/documentation.yml
   workflow_dispatch:
 
 permissions:
