@@ -6,7 +6,6 @@ on:
     paths:
         - "DocCPublisherDemo/DocCPublisherDemo/**.swift"
         - .github/workflows/documentation.yml
-        - .github/workflows/slack.yml
   workflow_dispatch:
 
 permissions:
