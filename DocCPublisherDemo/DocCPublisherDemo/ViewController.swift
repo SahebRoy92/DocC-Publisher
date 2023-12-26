@@ -15,7 +15,7 @@ class ViewController: UIViewController {
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        print("Added viewWillAppear ---10-")
+        print("Added viewWillAppear ---13-")
     }
 }
 
