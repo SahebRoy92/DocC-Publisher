@@ -18,7 +18,7 @@ public class KTextField: UITextField {
     @IBInspectable public var newBorderWidth: CGFloat = 0.0 {
         didSet {
             layer.borderWidth = newBorderWidth
-            layer.borderColor = newBorderWidth.cgColor
+            layer.borderColor = borderColor.cgColor
         }
     }
     
