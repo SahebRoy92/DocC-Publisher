@@ -1,0 +1,20 @@
+name: Slack Notification
+
+on:
+  push:
+    branches:
+      - main 
+
+jobs:
+  notify-on-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Notify in Slack
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'  
+      run: |
+        curl -X POST -H 'Content-type: application/json' --data '{
+          "text": "New push to the main branch by GitHub Actions",
+          "channel": "#your-channel-name",
+          "username": "GitHub Actions"
+        }' ${{ secrets.SLACK_WEBHOOK_URL }}
