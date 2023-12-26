@@ -1,4 +1,4 @@
-name: Run JS and Post to Slack
+name: CHECK FOR CHANGES
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  run-js-and-post-to-slack:
+  run-python-and-post-to-slack:
     runs-on: ubuntu-latest
 
     steps:
@@ -15,13 +15,15 @@ jobs:
       with:
         fetch-depth: 2
 
-    - name: Install Node.js
-      run: sudo apt-get update && sudo apt-get install -y nodejs npm
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
 
-    - name: Run JavaScript Script
+    - name: Run Python Script
       id: run
       run: |
-        report=$(node detect_changes.js)
+        report=$(python detect_changes.py)
         echo "::set-output name=report::$report"
 
     - name: Post to Slack
