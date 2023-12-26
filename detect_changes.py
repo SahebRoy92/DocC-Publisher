@@ -1,4 +1,9 @@
 import subprocess
+import os
+
+# Ensure the directory exists
+output_directory = 'path/to/'
+os.makedirs(output_directory, exist_ok=True)
 
 # Get the list of changed files in the last commit
 result = subprocess.run('git diff --name-only HEAD^ HEAD', shell=True, stdout=subprocess.PIPE, text=True)
@@ -11,7 +16,7 @@ swift_files = [file for file in changed_files if file.endswith('.swift')]
 report = f'Changed Swift Files:\n{"\n".join(swift_files)}'
 
 # Write the report to a file
-with open('path/to/changes-report.txt', 'w') as report_file:
+with open(os.path.join(output_directory, 'changes-report.txt'), 'w') as report_file:
     report_file.write(report)
 
 print(report)
