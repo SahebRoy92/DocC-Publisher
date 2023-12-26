@@ -43,13 +43,31 @@ jobs:
           echo "Class Names: ${class_names[@]}"
           echo "::set-output name=class_names::${class_names[@]}"
 
+      - name: Get changes for each file
+        id: get_changes
+        run: |
+          class_names=${{ steps.extract_class_names.outputs.class_names }}
+          changes=""
+
+          for class_name in $class_names; do
+            changes+="\nChanges in $class_name:\n"
+            changes+=$(git diff --unified=0 ${{ github.event.before }} ${{ github.sha }} $FILES | grep -A 2 "class $class_name" || true)
+          done
+
+          echo "Changes:"
+          echo "$changes"
+          echo "::set-output name=changes::$changes"
+
       - name: Send message to Slack
         if: success()
         run: |
           class_names=${{ steps.extract_class_names.outputs.class_names }}
+          changes=${{ steps.get_changes.outputs.changes }}
+
           for class_name in $class_names; do
+            class_changes=$(echo "$changes" | sed -n "/Changes in $class_name:/,/Changes in/ p")
             curl -X POST -H 'Content-type: application/json' --data '{
-              "text": "Code modified at: '${class_name}'",
+              "text": "Code modified at: '${class_name}'\nChanges -\n'"$class_changes"'",
               "channel": "#ios-demos",
               "username": "GitHub Actions"
             }' ${{ secrets.SLACK_WEBHOOK_URL }}
