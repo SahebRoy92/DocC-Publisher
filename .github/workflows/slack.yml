@@ -16,14 +16,13 @@ jobs:
         fetch-depth: '2'
 
     - name: Run JavaScript Script
+      id: run
       run: |
-        node detect_changes.js
-
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        report=$(node detect_changes.js)
+        echo "::set-output name=report::$report"
 
     - name: Post to Slack
       run: |
         curl -X POST -H 'Content-type: application/json' \
-          --data '{"text": "'"$(cat ${{ github.workspace }}/path/to/changes-report.txt)"'"}' \
-          ${{ secrets.SLACK_WEBHOOK_URL }}
+          --data '{"text": "'"${{ steps.run.outputs.report }}"'"}' \
+          ${{ secrets.SLACK_WEBHOOK_URL }}/ios-demos
