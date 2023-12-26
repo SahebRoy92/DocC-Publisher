@@ -25,7 +25,7 @@ jobs:
 
       - name: Run Python script
         id: run_script
-        run: python path/to/notify_slack.py
+        run: python detect_changes.py
 
       - name: Send message to Slack
         if: success()
