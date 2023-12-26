@@ -12,4 +12,4 @@ A repository example on how to use Github actions and Github Pages -
 
 Documentation of this project is auto generated and deployed at https://sahebroy92.github.io/DocC-Publisher/
 
-// Testing - This shouldnt trigger the workflow
+
