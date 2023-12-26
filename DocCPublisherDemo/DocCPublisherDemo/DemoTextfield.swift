@@ -105,7 +105,7 @@ public class KTextField: UITextField {
     /// Applies border to the text view with the specified width
     @IBInspectable public var borderWidthNEWBORDER13: CGFloat = 0.0 {
         didSet {
-            layer.borderWidth = borderWidthNEWBORDER13
+            layer.borderWidth = borderWidthNEWBORDER12
             layer.borderColor = borderColor.cgColor
         }
     }

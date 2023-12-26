@@ -1,30 +1,17 @@
+import subprocess
 import os
-from git import Repo
 
-def get_changed_files():
-    repo = Repo(os.getcwd())
+# Get the list of changed files in the last commit
+changed_files = subprocess.check_output('git diff --name-only HEAD^ HEAD', shell=True).decode('utf-8').split('\n')
 
-    # Fetch changes from the remote repository
-    repo.remotes.origin.fetch()
+# Filter out only the .swift files
+swift_files = [file for file in changed_files if file.endswith('.swift')]
 
-    # Get the commit hash of the most recent commit on the remote main branch
-    remote_main_commit = repo.remotes.origin.refs['main'].commit.hexsha
+# Create a report of changed .swift files
+report = f'Changed Swift Files:\n{"\n".join(swift_files)}'
 
-    # Get the changed files between the local and remote main branches
-    changed_files = [item.a_path for item in repo.index.diff(None, remote_main_commit)]
-    return changed_files
+# Write the report to a file
+with open('path/to/changes-report.txt', 'w') as report_file:
+    report_file.write(report)
 
-def create_slack_message(changed_files):
-    if not changed_files:
-        return "No new changes detected."
-
-    message = "New changes detected in main branch:\n"
-    for file in changed_files:
-        message += f"- {file}\n"
-
-    return message
-
-if __name__ == "__main__":
-    changed_files = get_changed_files()
-    slack_message = create_slack_message(changed_files)
-    print(slack_message)
+print(report)
