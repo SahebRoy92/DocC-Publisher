@@ -1,54 +1,41 @@
-name: Slack Notification
+name: Detect Changes and Notify Slack
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'DocCPublisherDemo/DocCPublisherDemo/*'
+    branches:
+      - main
 
 jobs:
-  check-xcode-changes:
-    runs-on: macos-latest
-    env:
-      FILES: ""
+  detect-changes-and-notify:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          xcode-version: latest
+          python-version: 3.8
 
-      - name: Get changed files
-        id: changed_files
+      - name: Install dependencies
         run: |
-          echo "Changed Files:"
-          export FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '.swift' || true)
-          echo "$FILES"
+          python -m pip install --upgrade pip
+          pip install gitpython
 
-      - name: Get changes for each file
-        id: get_changes
+      - name: Run Python script and capture changes
+        id: detect_changes
         run: |
-          changes=""
-          while IFS= read -r file; do
-            class_name=$(basename "$file" .swift)
-            changes+="\nChanges in $class_name:\n"
-            changes+=$(git diff --unified=0 ${{ github.event.before }} ${{ github.sha }} "$file" | grep -A 2 "class $class_name" || true)
-          done <<< "$FILES"
-
-          echo "Changes:"
-          echo "$changes"
-          echo "::set-output name=changes::$changes"
+          changed_files=$(/detect_changes.py)  # Replace with the actual path
+          echo "Changed Files: $changed_files"
+          echo "::set-output name=changed_files::$changed_files"
 
       - name: Send message to Slack
-        if: success()
+        if: steps.detect_changes.outputs.changed_files != ''
         run: |
-          changes=${{ steps.get_changes.outputs.changes }}
-
+          SLACK_MESSAGE="Changes detected in files:\n$(echo "${{ steps.detect_changes.outputs.changed_files }}")"
           curl -X POST -H 'Content-type: application/json' --data '{
-            "text": "Changes in Swift files:\n'"$changes"'",
+            "text": "'"$SLACK_MESSAGE"'",
             "channel": "#ios-demos",
             "username": "GitHub Actions"
           }' ${{ secrets.SLACK_WEBHOOK_URL }}
